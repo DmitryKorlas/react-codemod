@@ -96,10 +96,17 @@ module.exports = function(fileInfo, api, options) {
       es6ClassSortCandidates.forEach(sortClassProperties);
     }
 
-    if (
-      createClassSortCandidates.size() > 0 ||
-      es6ClassSortCandidates.size() > 0
-    ) {
+    let candidatesAmount = createClassSortCandidates.size() + es6ClassSortCandidates.size();
+
+    if (candidatesAmount === 0) {
+      // find other classes which does not extend from React
+      let otherCandidates = root.find(j.ClassDeclaration);
+
+      candidatesAmount += otherCandidates.size();
+      otherCandidates.forEach(sortClassProperties);
+    }
+
+    if (candidatesAmount > 0) {
       return root.toSource(printOptions);
     }
   }
