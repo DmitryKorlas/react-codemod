@@ -2,7 +2,7 @@
  * Copyright 2015-present, Facebook, Inc.
  *
  * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree. 
+ * LICENSE file in the root directory of this source tree.
  *
  */
 
@@ -282,6 +282,46 @@ module.exports = function(j) {
     return spec && spec.properties.some(prop => isSpecificMixinsProperty(prop, mixinIdentifierNames));
   };
 
+  const isJsxNodeType = (node) => node.type === 'JSXElement';
+
+  const isReturnJSX = (method) => {
+    const body = [
+      method.body?.body,
+      method.value?.body?.body,
+      method.consequent?.body,
+      method.alternate?.body
+    ].filter(Boolean).flat();
+
+    if (!Array.isArray(body)) {
+      return false;
+    }
+
+    return body.some(bodyStatement => {
+      if (!bodyStatement) {
+        return false;
+      }
+      if (bodyStatement.type === 'ReturnStatement') {
+        switch (bodyStatement.argument?.type) {
+          case 'JSXElement': {
+            return  true;
+          }
+          case 'ArrayExpression': {
+            return bodyStatement.argument.elements.some(isJsxNodeType);
+          }
+          case 'ConditionalExpression': {
+            const {consequent, alternate} = bodyStatement.argument;
+            return [consequent, alternate].some(isJsxNodeType);
+          }
+          default: {
+            return false;
+          }
+        }
+      } else {
+        return isReturnJSX(bodyStatement);
+      }
+    });
+  };
+
   return {
     createCreateReactClassCallExpression,
     findReactES6ClassDeclaration,
@@ -297,6 +337,8 @@ module.exports = function(j) {
     hasReact,
     isMixinProperty,
     removeUnusedSuperClassImport,
+
+    isReturnJSX,
 
     // "direct" methods
     findAllReactCreateClassCalls,
