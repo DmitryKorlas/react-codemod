@@ -28,7 +28,10 @@ export default (file, api, options) => {
     const firstLetterInUppercase = firstLetter.toUpperCase();
 
     const renamed = `render${firstLetterInUppercase}${letters.join('')}`;
-    return renamed.replace('renderGet', 'render');
+    return renamed
+      .replace('renderGet', 'render')
+      .replace('renderShow', 'render')
+      .replace('renderDisplay', 'render');
   }
 
   const renameMethods = path => {
@@ -37,7 +40,7 @@ export default (file, api, options) => {
       return;
     }
 
-    if (!name.startsWith('render') && isReturnJSX(path.node)) {
+    if (!name.startsWith('render') && !name.includes('Renderer') && isReturnJSX(path.node)) {
       const newName = renameToRender(name);
       path.value.key.name = newName;
       renames[name] = newName;
@@ -92,6 +95,20 @@ export default (file, api, options) => {
             false,
           ),
           path.value.arguments
+        )
+      ));
+
+    // handle case when method accessed but not called,
+    // i.e. <List itemRenderer={this.displayItem} />
+    // should be renamed to <List itemRenderer={this.renderItem} />
+    root.find(j.MemberExpression, {
+      object: { type: 'ThisExpression' },
+      property: { type: 'Identifier', name: oldName }
+    })
+      .forEach(path => j(path).replaceWith(
+        j.memberExpression(
+          j.thisExpression(),
+          j.identifier(newName),
         )
       ));
   }

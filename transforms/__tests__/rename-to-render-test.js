@@ -12,3 +12,7 @@ const defineTest = require('jscodeshift/dist/testUtils').defineTest;
 defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-basic');
 defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-if-else');
 defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-arrays');
+defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-method-as-prop');
+defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-contains-fragment');
+defineTest(__dirname, 'rename-to-render', null, 'rename-to-render/rename-to-render-switch');
+

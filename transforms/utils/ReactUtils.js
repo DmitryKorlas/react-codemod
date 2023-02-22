@@ -282,15 +282,16 @@ module.exports = function(j) {
     return spec && spec.properties.some(prop => isSpecificMixinsProperty(prop, mixinIdentifierNames));
   };
 
-  const isJsxNodeType = (node) => node.type === 'JSXElement';
+  const isJsxNodeType = (node) => node.type === 'JSXElement' || node.type === 'JSXFragment';
 
   const isReturnJSX = (method) => {
     const body = [
       method.body?.body,
       method.value?.body?.body,
       method.consequent?.body,
-      method.alternate?.body
-    ].filter(Boolean).flat();
+      method.alternate?.body,
+      Array.isArray(method.consequent) ? method.consequent.map(item => item.body) : null, // switch case
+    ].filter(Boolean).flat(2);
 
     if (!Array.isArray(body)) {
       return false;
@@ -302,7 +303,8 @@ module.exports = function(j) {
       }
       if (bodyStatement.type === 'ReturnStatement') {
         switch (bodyStatement.argument?.type) {
-          case 'JSXElement': {
+          case 'JSXElement':
+          case 'JSXFragment': {
             return  true;
           }
           case 'ArrayExpression': {
@@ -316,6 +318,8 @@ module.exports = function(j) {
             return false;
           }
         }
+      } else if (bodyStatement.type === 'SwitchStatement') {
+        return bodyStatement.cases.some(isReturnJSX);
       } else {
         return isReturnJSX(bodyStatement);
       }
